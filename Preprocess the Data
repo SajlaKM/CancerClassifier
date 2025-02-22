@@ -1,1 +1,70 @@
+import os
+import cv2
+import zipfile
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from google.colab import drive
+from tensorflow import keras
+from tensorflow.keras import layers
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.utils import to_categorical
+
+# Mounting the Drive where dataset is available
+
+drive.mount('/content/drive')
+DATASET_PATH = "/content/drive/MyDrive/GitHub dataset /dataset.zip"
+extract_path = "/content/dataset"
+with zipfile.ZipFile(DATASET_PATH, 'r') as zip_ref:
+    zip_ref.extractall(extract_path)
+print("Extracted files:", os.listdir(extract_path))
+
+image_size = (227, 227)  # As per architecture
+
+# Define training path
+train_path = os.path.join(extract_path, "Training")
+
+images = []
+labels = []
+
+# Iterate through class folders (e.g., 'glioma', 'meningioma', etc.)
+for label in os.listdir(train_path):
+    label_path = os.path.join(train_path, label)
+
+    # Ensure it's a directory (to avoid processing files by mistake)
+    if not os.path.isdir(label_path):
+        continue
+
+    # Process each image inside the class folder
+    for img_name in os.listdir(label_path):
+        img_path = os.path.join(label_path, img_name)
+
+        # Skip directories (ensure only image files are processed)
+        if os.path.isdir(img_path):
+            continue
+
+        try:
+            img = load_img(img_path, target_size=image_size)  # Load image
+            img_array = img_to_array(img) / 255.0  # Normalize
+            images.append(img_array)
+            labels.append(label)  # Store class
+        except Exception as e:
+            print(f"Skipping {img_path}: {e}")  # Handle potential errors
+
+print(f"Total images loaded: {len(images)}")
+print(f"Total labels loaded: {len(labels)}")
+
+# Load training and testing data
+X_train, y_train = load_images_and_masks(train_dir)
+X_test, y_test = load_images_and_masks(test_dir)
+
+print("Data Loaded Successfully!")
+# Split training data into train/validation
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=42)
+
+# Print dataset shape
+print("Training set:", X_train.shape, y_train.shape)
+print("Validation set:", X_val.shape, y_val.shape)
+print("Test set:", X_test.shape, y_test.shape)
 
